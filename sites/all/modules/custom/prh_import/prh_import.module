@@ -1,0 +1,665 @@
+<?php
+
+/**
+ * Author class.
+ */
+Class Author{
+  private $id;
+  private $name;
+  private $bio;
+  private $thumbnail;
+  
+  /**
+   * 
+   * @return type
+   */
+  public function get_id() {
+    return $this->id;
+  }
+  /**
+   * 
+   * @param type $id
+   */
+  public function set_id($id) {
+    $this->id = $id;
+  }
+  /**
+   * 
+   * @return type
+   */
+  public function get_name() {
+    return $this->name;
+  }
+  /**
+   * 
+   * @param type $name
+   */
+  public function set_name($name) {
+    $this->name = $name;
+  }
+  /**
+   * 
+   * @return type
+   */
+  public function get_bio() {
+    return $this->bio;
+  }
+  /**
+   * 
+   * @param type $bio
+   */
+  public function set_bio($bio) {
+    $this->bio = $bio;
+  }
+  /*
+   * 
+   */
+  public function get_thumbnail() {
+    $file_info = _save_image_file($this->thumbnail, 'author');
+    return $file_info->fid;
+  }
+  /**
+   * 
+   * @param type $thumbnail
+   */
+  public function set_thumbnail($thumbnail) {
+    $this->thumbnail = $thumbnail;
+  }
+}
+
+/**
+ * Work class.
+ */
+Class Work {
+  private $id;
+  private $title;
+  private $subtitle;
+  private $author_ids;
+  private $format;
+  private $on_sale_date;
+  private $price;
+  private $description;
+  private $thumbnail;
+  private $more_books;
+  
+  /**
+   * 
+   * @return type
+   */
+  public function get_id() {
+    return $this->id;
+  }
+  /**
+   * 
+   * @param type $id
+   */
+  public function set_id($id) {
+    $this->id = $id;
+  }
+  
+  public function get_title() {
+    return $this->title;
+  }
+  public function set_title($title) {
+    $this->title = $title;
+  }
+  /**
+   * 
+   * @return type
+   */
+  public function get_subtitle() {
+    return $this->subtitle;
+  }
+  /**
+   * 
+   * @param type $subtitle
+   */
+  public function set_subtitle($subtitle) {
+    $this->subtitle = $subtitle;
+  }
+  /**
+   * 
+   * @param type $contributors
+   * @return type
+   */
+  public function get_author_ids($contributors = NULL) {
+    if ($contributors != NULL) {
+      $author_ids = array();
+
+      foreach ($contributors as $key => $contributor) {
+        $author_detail = _prh_get_author_detail($contributor->id);
+
+        $author = new Author();
+        $author->set_id($contributor->id);
+        $author->set_name($contributor->display);
+        $author->set_bio($contributor->spotlight);
+        $author->set_thumbnail($author_detail->_links[1]->href);
+
+        $aid = _prh_save_author($author);
+        $author_ids[$aid] = $contributor->id;
+        
+      }
+      
+      $this->set_author_ids($author_ids);
+    }
+    return $this->author_ids;
+  }
+  /**
+   * 
+   * @param type $author_ids
+   */
+  public function set_author_ids($author_ids) {
+    $this->author_ids = $author_ids;
+  }
+  /**
+   * 
+   * @return type
+   */
+  public function get_format() {
+    return $this->format;
+  }
+  /**
+   * 
+   * @param type $format
+   */
+  public function set_format($format) {
+    $this->format = $format;
+  }
+  /**
+   * 
+   * @return type
+   */
+  public function get_on_sale_date() {
+    return $this->on_sale_date;
+  }
+  /**
+   * 
+   * @param type $on_sale_date
+   */
+  public function set_on_sale_date($on_sale_date) {
+    $this->on_sale_date = $on_sale_date;
+  }
+  /**
+   * 
+   * @return type
+   */
+  public function get_price() {
+    return $this->price;
+  }
+  /**
+   * 
+   * @param type $price
+   */
+  public function set_price($price) {
+    $this->price = $price;
+  }
+  /**
+   * 
+   * @return type
+   */
+  public function get_description() {
+    return $this->description;
+  }
+  /**
+   * 
+   * @param type $description
+   */
+  public function set_description($description) {
+    $this->description = $description;
+  }
+  /**
+   * 
+   * @return type
+   */
+  public function get_thumbnail() {
+    $file_info = _save_image_file($this->thumbnail, 'work');
+    return $file_info->fid;
+  }
+  /**
+   * 
+   * @param type $thumbnail
+   */
+  public function set_thumbnail($thumbnail) {
+    $this->thumbnail = $thumbnail;
+  }
+  /**
+   * 
+   * @return type
+   */
+  public function get_more_books() {
+    return $this->more_books;
+  }
+  /**
+   * 
+   * @param type $more_books
+   */
+  public function set_more_books($more_books) {
+    $works = $more_books->works;
+    $more_book_nids = array();
+    foreach ($works as $work) {
+      $work_id = $work->workId;
+      $work_detail = _prh_get_work_detail($work->workId);
+
+      $work_obj = new Work();
+      $work_obj->set_id($work_id);
+      $work_obj->set_title($work_detail->frontlistiestTitle->title);
+      $work_obj->set_subtitle($work_detail->frontlistiestTitle->subtitle);
+      $work_obj->set_author_ids($work_obj->get_author_ids($work_detail->frontlistiestTitle->contributors));
+      $work_obj->set_format($work_detail->frontlistiestTitle->format->name);
+      $work_obj->set_on_sale_date($work_detail->frontlistiestTitle->onSaleDate);
+      $work_obj->set_price($work_detail->frontlistiestTitle->usPrice);
+      $work_obj->set_description($work_detail->frontlistiestTitle->aboutTheBook);
+      $work_obj->set_thumbnail($work_detail->frontlistiestTitle->_links[0]->href);
+      $more_book_nids[] = _prh_save_work($work_obj);
+    }
+    $this->more_books = $more_book_nids;
+  }
+  
+}
+
+/**
+ * Impliments hook_menu().
+ */
+function prh_import_menu() {
+  $items = array();
+
+  // Admin menu for importing content from PRH API.
+  $items['admin/config/prh/import-work'] = array(
+    'title' => 'Import work from PRH api',
+    'description' => 'Import works and authors from PRH api.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('prh_import_work_form'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+  );
+  
+  return $items;
+}
+
+/**
+ * Funciton to make a http request.
+ *
+ * @param string $request_url
+ *   URL for API endpoint.
+ *
+ * @return array
+ *   If success, returns parsed JSON response data in array.
+ */
+function _prh_http_request($request_url) {
+  $result = drupal_http_request($request_url);
+
+  if (is_object($result) && isset($result->code) && $result->code === '200'
+      && isset($result->data) && is_string($result->data)) {
+    return json_decode($result->data);
+  }
+  else {
+    watchdog('prh_import',
+        t('Http request failed. - %error_code '),
+        array('%error_code' => $result->code), WATCHDOG_ERROR);
+    return FALSE;
+  }
+}
+
+/**
+ * Function to import works.
+ */
+function _prh_import_works() {
+  $request_url = variable_get('prh_api_url') .
+      '/resources/v2/title' .
+      '/domains/' .variable_get('prh_domain') .
+      '/works' .
+      '?isbn=' . variable_get('prh_isbn') .
+      '&api_key=' . variable_get('prh_api_key');
+  
+  $data = _prh_http_request($request_url);
+
+  if($data == FALSE) {
+    drupal_set_message(t('Importing is failed.'), 'warning');
+    return;
+  }
+
+  $works = $data->data->works;
+
+  foreach ($works as $work) {
+    $work_id = $work->workId;
+    // Get the detail information.
+    $work_detail = _prh_get_work_detail($work->workId);
+
+    $work_obj = new Work();
+    $work_obj->set_id($work_id);
+    $work_obj->set_title($work_detail->frontlistiestTitle->title);
+    $work_obj->set_subtitle($work_detail->frontlistiestTitle->subtitle);
+    $work_obj->set_author_ids($work_obj->get_author_ids($work_detail->frontlistiestTitle->contributors));
+    $work_obj->set_format($work_detail->frontlistiestTitle->format->name);
+    $work_obj->set_on_sale_date($work_detail->frontlistiestTitle->onSaleDate);
+    $work_obj->set_price($work_detail->frontlistiestTitle->usPrice);
+    $work_obj->set_description($work_detail->frontlistiestTitle->aboutTheBook);
+    $work_obj->set_thumbnail($work_detail->frontlistiestTitle->_links[0]->href);
+    
+    $author_id = current($work_obj->get_author_ids());
+    $cat_id = $work_detail->frontlistiestTitle->categories[0]->catId;
+    $more_books = _prh_get_more_work($author_id, $cat_id);
+    $work_obj->set_more_books($more_books);
+    
+    // Save work.
+    _prh_save_work($work_obj);
+  }
+  drupal_set_message(t('Importing is done.'));
+}
+
+/**
+ * Function to get work's detail information.
+ *
+ * @param int $work_id
+ *   Work id.
+ *
+ * @return object
+ *   Response data object from http requert.
+ */
+function _prh_get_work_detail($work_id) {
+  $request_url = variable_get('prh_api_url') .
+      '/resources/v2/title' .
+      '/domains/' .variable_get('prh_domain') .
+      '/works/' . $work_id .
+      '/views/product-display' .
+      '?api_key=' . variable_get('prh_api_key');
+
+  $data = _prh_http_request($request_url);
+
+  if ($data != FALSE) {
+    return $data->data;
+  }
+  return NULL;
+}
+
+/**
+ * Function to get list of related work.
+ *
+ * @param int $author_id
+ *   Author id.
+ * @param int $cat_id
+ *   Category id.
+ *
+ * @return object
+ *   Response data object from http requert.
+ */
+function _prh_get_more_work($author_id, $cat_id) {
+  $request_url = variable_get('prh_api_url') .
+      '/resources/v2/title' .
+      '/domains/' .variable_get('prh_domain') .
+      '/works' .
+      '?authorId=' . $author_id .
+      '&catId=' . $cat_id .
+      '&api_key=' . variable_get('prh_api_key');
+
+  $data = _prh_http_request($request_url);
+
+  if ($data != FALSE) {
+    return $data->data;
+  }
+  return NULL;
+}
+
+/**
+ * Function to save work object as Work node.
+ *
+ * @param object $work
+ *   Work object.
+ *
+ * @return int
+ *   Node id of work.
+ */
+function _prh_save_work($work) {
+  // Check if it already exist in database.
+  $dup_check = _prh_node_dup_check('work', $work->get_id());
+  
+  if ($dup_check == FALSE) {
+    $node = new stdClass();
+    $node->title = $work->get_title();
+    $node->type = "work";
+    node_object_prepare($node);
+    $node->body[LANGUAGE_NONE][0] = array('value' => $work->get_description());
+    $node->field_work_id[LANGUAGE_NONE][0] = array('value' => $work->get_id());
+    if ($work->get_subtitle() != NUll) {
+      $node->field_subtitle[LANGUAGE_NONE][0] = array('value' => $work->get_subtitle());
+    }
+    if ($work->get_price() != NUll) {
+      $node->field_price[LANGUAGE_NONE][0] = array('value' => $work->get_price());
+    }
+    $node->field_format[LANGUAGE_NONE][0] = array('value' => $work->get_format());
+    $node->field_thumbnail[LANGUAGE_NONE][0] = array('fid' => $work->get_thumbnail());
+    _save_authors_field($node, $work->get_author_ids());
+    _save_on_sale_date_field($node, $work->get_on_sale_date());
+    _save_more_books_field($node, $work->get_more_books());
+
+    $node = node_submit($node);
+    node_save($node);
+  }
+  else {
+    $node = node_load($dup_check);
+    $node->body[LANGUAGE_NONE][0] = array('value' => $work->get_description());
+    $node->field_work_id[LANGUAGE_NONE][0] = array('value' => $work->get_id());
+    if ($work->get_subtitle() != NUll) {
+      $node->field_subtitle[LANGUAGE_NONE][0] = array('value' => $work->get_subtitle());
+    }
+    if ($work->get_price() != NUll) {
+      $node->field_price[LANGUAGE_NONE][0] = array('value' => $work->get_price());
+    }
+    $node->field_format[LANGUAGE_NONE][0] = array('value' => $work->get_format());
+    $node->field_thumbnail[LANGUAGE_NONE][0] = array('fid' => $work->get_thumbnail());
+    _save_authors_field($node, $work->get_author_ids());
+    _save_on_sale_date_field($node, $work->get_on_sale_date());
+    _save_more_books_field($node, $work->get_more_books());
+
+    node_save($node);
+  }
+  return $node->nid;
+
+}
+
+/**
+ * Function to save author field.
+ *
+ * @param object $node
+ *   Node object.
+ * @param array $authors
+ *   Array of Author ids.
+ */
+function _save_authors_field(&$node, $authors) {
+  unset($node->field_author);
+  foreach ($authors as $aid => $author_id) {
+    $node->field_author[LANGUAGE_NONE][] = array(
+      'target_id' => $aid,
+      'target_type' => 'node',
+    );
+  }
+}
+
+/**
+ * Function to save more books field.
+ *
+ * @param object $node
+ *   Node object.
+ * @param array $more_books
+ *   Array of node id of books.
+ */
+function _save_more_books_field(&$node, $more_books) {
+  unset($node->field_more_books);
+  foreach ($more_books as $book) {
+    $node->field_more_books[LANGUAGE_NONE][] = array(
+      'target_id' => $book,
+      'target_type' => 'node',
+    );
+  }
+}
+
+/**
+ * Function to save on sale date field.
+ * 
+ * @param object $node
+ *   Node object.
+ * @param object $date
+ *   Object that contains on sale date and timezone.
+ *
+ * @return int
+ *   Entity id of field_collection for on sales date field.
+ */
+function _save_on_sale_date_field(&$node, $date) {
+  unset($node->field_on_sale_date);
+  $field_format = entity_create(
+      'field_collection_item',
+      array('field_name' => 'field_on_sale_date'));
+  
+  $field_format->field_date[LANGUAGE_NONE][0]['value'] = $date->date;
+  $field_format->field_timezone[LANGUAGE_NONE][0]['value'] = $date->timezone;
+  
+  // Save field collection item
+  $field_format->setHostEntity('node', $node);
+  $field_format->save(TRUE);
+  
+  return $field_format->item_id;
+}
+
+/**
+ * Function to get Author's detail information.
+ *
+ * @param int $author_id
+ *   Author id.
+ *
+ * @return object
+ *   Response data object from http requert.
+ */
+function _prh_get_author_detail($author_id) {
+  $request_url = variable_get('prh_api_url') .
+      '/resources/v2/title' .
+      '/domains/' .variable_get('prh_domain') .
+      '/authors/' . $author_id .
+      '/views/author-display' .
+      '?api_key=' . variable_get('prh_api_key');
+
+  $data = _prh_http_request($request_url);
+
+  if ($data != FALSE) {
+    return $data->data;
+  }
+  return NULL;
+}
+
+/**
+ * Function to save author object as Author node.
+ *
+ * @param object $author
+ *   Author object.
+ *
+ * @return int
+ *   Node id of author.
+ */
+function _prh_save_author($author) {
+  // Check if it already exist in database.
+  $dup_check = _prh_node_dup_check('author', $author->get_id());
+
+  if ($dup_check == FALSE) {
+    $node = new stdClass();
+    $node->title = $author->get_name();
+    $node->type = "author";
+    node_object_prepare($node);
+    $node->body[LANGUAGE_NONE][0] = array('value' => $author->get_bio());
+    $node->field_author_id[LANGUAGE_NONE][0] = array('value' => $author->get_id());
+    $node->field_thumbnail[LANGUAGE_NONE][0] = array('fid' => $author->get_thumbnail());
+    $node = node_submit($node);
+    node_save($node);
+  }
+  else {
+    $node = node_load($dup_check);
+    $node->body[LANGUAGE_NONE][0] = array('value' => $author->get_bio());
+    $node->field_thumbnail[LANGUAGE_NONE][0] = array('fid' => $author->get_thumbnail());
+    node_save($node);
+  }
+
+  return $node->nid;
+
+}
+
+/**
+ * Function to check duplication of work or author.
+ *
+ * @param string $name
+ *   Name of Field either work or author.
+ * @param int $id
+ *   Node id of work or author.
+ *
+ * @return int
+ *   If work or author is already exist, it returns an entity id.
+ */
+function _prh_node_dup_check($name, $id) {
+  $query = db_select('field_data_field_'.$name.'_id', 'fid');
+  $query->fields('fid', array('entity_id'));
+  $query->condition('fid.field_'.$name.'_id_value', $id, '=');
+  $result = $query->execute();
+  //dpm($query->__toString());
+
+  if ($result->rowCount() > 0) {
+    return key($result->fetchAllAssoc('entity_id'));
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
+ * Callback form page of custom admin menu for importing content.
+ *
+ * @return array
+ *   Form array.
+ */
+function prh_import_work_form() {
+  $form = array();
+
+  $form['import_work'] = array(
+    '#type' => 'fieldset',
+    '#title' => 'Import works from PRH API',
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form['import_work']['help'] = array(
+    '#markup' => '<p>Submitting this form will start importing works from PRH API.</p>' .
+    '<div><strong>Given Information: <strong></div>' .
+    '<ul>' .
+    '<li>Webdomain = <strong>PRH.CA</strong></li>' .
+    '<li>ISBN = <strong>9780385666138></strong></li>' .
+    '</ul>',
+  );
+  $form['import_work']['import'] = array(
+    '#type' => 'submit',
+    '#value' => 'Import Works',
+  );
+
+  return $form;
+}
+
+/**
+ * Function to trigger submitting of content importing form.
+ */
+function prh_import_work_form_submit() {
+  _prh_import_works();
+}
+
+/**
+ * Function to save work or author's cover image.
+ *
+ * @param string $url
+ *   Web url of images.
+ * @param type $type
+ *   Type of image either work or author.
+ *
+ * @return object
+ *   File object.
+ */
+function _save_image_file($url, $type) {
+  if (!is_dir('public://' . $type . '/')) {
+    drupal_mkdir('public://' . $type . '/');
+  }
+
+  $file_info = system_retrieve_file($url, 'public://' . $type . '/', TRUE);
+  return $file_info;
+}

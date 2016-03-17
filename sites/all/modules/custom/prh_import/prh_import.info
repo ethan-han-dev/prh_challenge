@@ -1,0 +1,5 @@
+name = PRH api content import
+description = PRH content import custom functionalities.
+package = PRH
+core = 7.x
+version = 7.x-1.0

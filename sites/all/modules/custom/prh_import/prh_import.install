@@ -1,0 +1,20 @@
+<?php
+/**
+ * Impliments hook_enable().
+ */
+function insight_platform_enable() {
+  variable_set('prh_api_url', 'https://api.penguinrandomhouse.com');
+  variable_set('prh_api_key', '5cn2g3jayfug88fvazhcn8na');
+  variable_set('prh_domain', 'PRH.CA');
+  variable_set('prh_isbn', '9780385666138');
+}
+
+/**
+ * Impliments hook_disable().
+ */
+function insight_platform_disable() {
+  variable_del('prh_api_url');
+  variable_del('prh_api_key');
+  variable_del('prh_domain');
+  variable_del('prh_isbn');
+}

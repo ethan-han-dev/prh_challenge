@@ -1,0 +1,112 @@
+<?php
+
+/**
+ * @file
+ * Insight platform search module.
+ * 
+ * Module to customize the SOLR search functionality and to build other search 
+ * related functionality.
+ */
+
+/**
+ * Implements hook_search_api_solr_query_alter().
+ */
+function search_api_auto_suggestion_search_api_solr_query_alter(array &$call_args, SearchApiQueryInterface $query) {
+  // solr setting to increase the chance of getting suggestion
+  // https://cwiki.apache.org/confluence/display/solr/Spell+Checking
+  // Specifies an accuracy value to help decide whether a result is worthwhile.
+  $call_args['params']['spellcheck.accuracy'] = 0.7;
+  // Causes Solr to build a new query based on the best suggestion for each term in the submitted query.
+  $call_args['params']['spellcheck.collate'] = 'true';
+  // If true, returns an expanded response detailing the collations found. If spellcheck.collate is false, this parameter will be ignored.
+  $call_args['params']['spellcheck.collateExtendedResults'] = 'true';
+  // Limits spellcheck responses to queries that are more popular than the original query.
+  $call_args['params']['spellcheck.onlyMorePopular'] = 'false';
+  // This parameter specifies the number of collation possibilities for Solr to try before giving up.
+  $call_args['params']['spellcheck.maxCollationTries'] = 1;
+}
+
+/**
+ * Implements hook_search_api_solr_search_results_alter().
+ */
+function search_api_auto_suggestion_search_api_solr_search_results_alter(array &$results, SearchApiQueryInterface $query, $response) {
+  // To prevent requerying for original keyword
+  $param = drupal_get_query_parameters();
+
+  // If there's any suggestions...
+  if(isset($response->spellcheck->suggestions) && count((array)$response->spellcheck->suggestions) > 0 && !isset($param['origin']) && !isset($param['is_original'])){
+    $param['origin'] = $param['query'];
+    foreach ($response->spellcheck->suggestions as $key=>$suggestion) {
+      if ($key != 'collation') {
+        $param['query'] = str_replace($key, $suggestion->suggestion[0], strtolower($param['query']));
+      }
+    }
+    drupal_goto('search',array('query' => $param));
+  }
+}
+
+/**
+ * Provides theme registration for themes across .inc files.
+ */
+function search_api_auto_suggestion_theme() {
+  return array(
+    'search_api_auto_suggestion_block' => array(
+      'path' => drupal_get_path('module', 'search_api_auto_suggestion') . '/theme',
+      'template' => 'search-api-auto-suggestion-block',
+    ),
+  );
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function search_api_auto_suggestion_block_info() {
+  // Footer Block.
+  $blocks['search_api_auto_suggestion_block'] = array(
+    'info' => t('Block for Insight Footer'),
+    'region' => 'content',
+    'status' => TRUE,
+    'visibility' => 1,
+    'pages' => "search*",
+    'cache' => DRUPAL_NO_CACHE,
+  );
+  
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function search_api_auto_suggestion_block_view($delta = '') {
+  $block = array();
+  switch ($delta) {
+    case 'search_api_auto_suggestion_block':
+      $block['content'] = search_api_auto_suggestion_block_content();
+      break;
+  }
+  return $block;
+}
+
+/**
+ * Callback for search auto suggestion block content.
+ *
+ * @return theme custom theme.
+ */
+function search_api_auto_suggestion_block_content() {
+  $param = drupal_get_query_parameters();
+  $search_term = $original_term = NULL;
+  
+  if (isset($param['query'])) {
+    $search_term = $param['query'];
+  }
+  if (isset($param['origin'])) {
+    $original_term = $param['origin'];
+  }
+
+  $variables = array(
+    'search_term' => $search_term,
+    'original_term' => $original_term,
+  );
+
+  return theme('search_api_auto_suggestion_block', $variables);
+}

@@ -1,0 +1,17 @@
+/**
+ * Place your custom styles here.
+ */
+
+.prh-content-left {
+  float: left;
+  width: auto;
+}
+.prh-content-right {
+  float: right;
+  width: 70%;
+}
+
+.view-more-books .views-row {
+  float: left;
+  width: 25%;
+}
